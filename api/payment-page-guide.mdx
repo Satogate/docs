@@ -1,0 +1,121 @@
+---
+title: "Payment Page 接入说明"
+description: "使用 Satogate 托管支付页面接收数字货币付款"
+---
+
+商户通过请求打开 Satogate 支付页面，用户将在此页面上获取链上收款地址等支付信息，并进行充值/支付操作。
+
+<Note>
+  因为区块链转账一般需时 1 分钟或更多，此页面不会回调通知商家是否已经完成支付。商户需要通过[交易回调](/api/08-callback)及[充值流水接口](/api/02-wallet#钱包充值历史流水)获取最终充值结果。
+</Note>
+
+<Tabs>
+  <Tab title="用户充值页面">
+    Satogate 可以为每个商户的用户提供一个固定的区块链收款地址。用户无需登录商户平台生成订单就可以往该收款地址转账数字货币，进而充值资产到商户平台。
+
+    **请求 URL**：`https://pay.satogate.io/charge`
+
+    **请求方式**：GET 方法，打开新浏览器窗口/标签页
+
+    ### 请求参数
+
+    <ParamField query="merchantAddressId" type="string" required>
+      商家用户 ID
+    </ParamField>
+    <ParamField query="apiKey" type="string" required>
+      商户 API KEY
+    </ParamField>
+    <ParamField query="timestamp" type="string" required>
+      请求发起的时间戳（秒）
+    </ParamField>
+    <ParamField query="sign" type="string" required>
+      请求签名
+    </ParamField>
+
+    <Warning>单次请求 10 分钟内有效，过时需要重新签名并打开新支付页面。</Warning>
+  </Tab>
+  <Tab title="订单支付页面">
+    Satogate 可以为商户的每个订单提供一个区块链收款地址。用户往收款地址转账，就能完成支付订单。
+
+    **请求 URL**：`https://pay.satogate.io/order`
+
+    **请求方式**：GET 方法，打开新浏览器窗口/标签页
+
+    ### 请求参数
+
+    <ParamField query="merchantOrderId" type="string" required>
+      商户订单 ID
+    </ParamField>
+    <ParamField query="merchantOrderAmount" type="string" required>
+      商户订单金额（单位：USD）
+    </ParamField>
+    <ParamField query="merchantOrderExpireTime" type="string" required>
+      商户订单超时时间（单位：秒）
+    </ParamField>
+    <ParamField query="apiKey" type="string" required>
+      商户 API KEY
+    </ParamField>
+    <ParamField query="timestamp" type="string" required>
+      请求发起的时间戳（秒）
+    </ParamField>
+    <ParamField query="sign" type="string" required>
+      请求签名
+    </ParamField>
+
+    <Warning>单次请求 10 分钟内有效，过时需要重新签名并打开新支付页面。</Warning>
+  </Tab>
+</Tabs>
+
+## 签名方式说明
+
+签名方式与[接口签名方式](/api/request-signature)大致相同，以下是不同点：
+
+<Warning>
+  apiKey、timestamp 及 sign 放在 URL 上，而非请求头上！
+</Warning>
+
+### 签名规则
+
+**规则**：`Method + HOST + URL + ? + QueryString`
+
+QueryString 对所有请求参数按参数名的字典序（ASCII 码）升序排序，并格式化为 `参数名称=参数值` 的形式，然后用 `&` 拼接。
+
+<Note>
+  区别于接口签名，此签名规则将时间戳放置在请求参数当中，而非直接追加在待签名串后面。
+</Note>
+
+### 签名示例
+
+以订单支付页面为例：
+
+| 参数名称 | 值 |
+| --- | --- |
+| merchantOrderId | abc123 |
+| merchantOrderAmount | 10.5 |
+| merchantOrderExpireTime | 900 |
+| apiKey | 123 |
+| timestamp | 12345678901 |
+
+签名前原字符串：
+
+```
+GETpay.satogate.io/order?apiKey=123&merchantOrderAmount=10.5&merchantOrderExpireTime=900&merchantOrderId=abc123&timestamp=12345678901
+```
+
+<CodeGroup>
+```php PHP
+$apiSecret = '0CDE6743F18F3DA********49FD47C1576671FD5';
+$srcStr = 'GETpay.satogate.io/order?apiKey=123&merchantOrderAmount=10.5&merchantOrderExpireTime=900&merchantOrderId=abc123&timestamp=12345678901';
+$macHex = hash_hmac('sha1', $srcStr, $apiSecret, false);
+$signStr = base64_encode($macHex);
+echo $signStr;
+```
+</CodeGroup>
+
+最终请求 URL：
+
+```
+https://pay.satogate.io/order?apiKey=123&merchantOrderAmount=10.5&merchantOrderExpireTime=900&merchantOrderId=abc123&timestamp=12345678901&sign=zmmjn35mikh6pM3V7sUEuX4wyYM=
+```
+
+最后，可通过 JavaScript 打开新窗口（或标签页）加载此链接。

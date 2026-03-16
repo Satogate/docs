@@ -1,0 +1,82 @@
+---
+title: "结算订单"
+description: "查询结算历史流水记录"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 结算历史流水
+
+**URL**：`GET /settlement_order/history`
+
+<Note>每一条结算记录包含相关的充值订单，字段 `depositOrderList` 是由充值订单 ID 组成的列表。</Note>
+
+### 请求参数
+
+<ParamField query="page" type="integer" required>
+  页码
+</ParamField>
+<ParamField query="pageSize" type="integer" required>
+  每页数量
+</ParamField>
+<ParamField query="status" type="string">
+  结算状态筛选（`PROCESSING` / `FINISHED` / `ERROR`）
+</ParamField>
+<ParamField query="startTime" type="string">
+  开始时间戳（秒）
+</ParamField>
+<ParamField query="endTime" type="string">
+  结束时间戳（秒）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/settlement_order/history?page=1&pageSize=10&status=FINISHED" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| data | array | 结算记录列表 |
+| data[].id | string | 结算订单 ID |
+| data[].amount | string | 结算金额 |
+| data[].currency | string | 结算币种 |
+| data[].status | string | 状态：`PROCESSING` / `FINISHED` / `ERROR` |
+| data[].depositOrderList | array | 关联的充值订单 ID 列表 |
+| data[].errorMsg | string | 错误信息（如有） |
+| data[].createTime | integer | 创建时间戳 |
+| data[].finishedTime | integer | 完成时间戳 |
+| page | integer | 当前页码 |
+| pageSize | integer | 每页数量 |
+| total | integer | 总记录数 |
+
+### 响应示例
+
+```json
+{
+  "data": [
+    {
+      "amount": "1000.00",
+      "createTime": 1681973331,
+      "currency": "USDT",
+      "depositOrderList": ["order-001", "order-002"],
+      "errorMsg": "",
+      "finishedTime": 1681977331,
+      "id": "settle-001",
+      "status": "FINISHED"
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "total": 1
+}
+```

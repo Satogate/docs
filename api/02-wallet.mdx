@@ -1,0 +1,437 @@
+---
+title: "钱包地址"
+description: "钱包地址管理、充值历史、项目账户与转账流水查询"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 获取收款地址
+
+**URL**：`POST /wallet/address`
+
+<Note>
+  本接口接受一个可选参数 merchantAddressId。当参数为空时，会生成一次性收款地址，并包含一个充值订单 ID；当参数不为空时，将生成一个与此 ID 绑定的钱包地址，并持续监听收款情况。**目前暂不支持一次性钱包地址，merchantAddressId 必填。**
+</Note>
+
+### 请求参数
+
+<ParamField body="merchantAddressId" type="string" required>
+  商户关联 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/wallet/address \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"merchantAddressId": "user123"}'
+```
+
+```json Request Body
+{
+  "merchantAddressId": "user123"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| depositOrderId | string | 充值订单 ID（绑定地址时为空） |
+| merchantAddressId | string | 商户关联 ID |
+| type | string | 地址类型：`BOUND` / `DISPOSABLE` |
+| wallets | array | 钱包地址列表 |
+| wallets[].address | string | 收款地址 |
+| wallets[].chain | string | 区块链（`ETH` / `BSC` / `TRON`） |
+| wallets[].supportTokens | array | 支持的币种列表 |
+
+### 响应示例
+
+```json
+{
+  "depositOrderId": "",
+  "merchantAddressId": "user123",
+  "type": "BOUND",
+  "wallets": [
+    {
+      "address": "0x1234...abcd",
+      "chain": "ETH",
+      "supportTokens": ["USDT", "USDC", "ETH"]
+    }
+  ]
+}
+```
+
+---
+
+## 钱包充值历史流水
+
+**URL**：`GET /wallet/deposit/history`
+
+<Note>merchantAddressId 与 address 两者必填其一。</Note>
+
+### 请求参数
+
+<ParamField query="page" type="integer" required>
+  页码
+</ParamField>
+<ParamField query="pageSize" type="integer" required>
+  每页数量
+</ParamField>
+<ParamField query="merchantAddressId" type="string">
+  商户关联 ID
+</ParamField>
+<ParamField query="address" type="string">
+  钱包地址
+</ParamField>
+<ParamField query="chain" type="string">
+  区块链筛选（`ETH` / `BSC` / `TRON`）
+</ParamField>
+<ParamField query="token" type="string">
+  币种筛选（如 `USDT`）
+</ParamField>
+<ParamField query="startTime" type="string">
+  开始时间戳（秒）
+</ParamField>
+<ParamField query="endTime" type="string">
+  结束时间戳（秒）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/wallet/deposit/history?page=1&pageSize=10&merchantAddressId=user123" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| data | array | 充值记录列表 |
+| data[].id | string | 充值订单 ID |
+| data[].address | string | 收款地址 |
+| data[].amount | string | 充值金额 |
+| data[].amountUsd | string | 折合 USD 金额 |
+| data[].chain | string | 区块链（`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`） |
+| data[].token | string | 币种 |
+| data[].status | string | 状态：`PROCESSING` / `FINISHED` / `ERROR` / `INSUFFICIENT_AMOUNT` / `TIMEOUT` |
+| data[].orderModeStatus | string | 订单模式状态：`CREATED` / `FINISHED` / `PARTIALLY_PAID` / `TIMEOUT` |
+| data[].depositAmount | string | 到账金额 |
+| data[].fromAddress | string | 转出地址 |
+| data[].txHash | string | 链上交易 Hash |
+| data[].txList | array | 链上交易 Hash 列表（订单模式可能关联多笔） |
+| data[].merchantAddressId | string | 商户关联 ID |
+| data[].settleTxid | string | 结算交易 ID |
+| data[].createTime | integer | 创建时间戳 |
+| data[].finishedTime | integer | 完成时间戳 |
+| page | integer | 当前页码 |
+| pageSize | integer | 每页数量 |
+| total | integer | 总记录数 |
+
+### 响应示例
+
+```json
+{
+  "data": [
+    {
+      "address": "0x1234...abcd",
+      "amount": "100.00",
+      "amountUsd": "100.00",
+      "chain": "BSC",
+      "createTime": 1681973331,
+      "depositAmount": "100.00",
+      "finishedTime": 1681973931,
+      "fromAddress": "0xabcd...1234",
+      "id": "order-001",
+      "merchantAddressId": "user123",
+      "orderModeStatus": "FINISHED",
+      "settleTxid": "tx-settle-001",
+      "status": "FINISHED",
+      "token": "USDT",
+      "txHash": "0xhash...",
+      "txList": ["0xhash..."]
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "total": 1
+}
+```
+
+---
+
+## 查询项目 ACCOUNT 信息
+
+**URL**：`GET /wallet/project/account`
+
+### 请求参数
+
+此接口无额外请求参数，仅需认证头。
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/wallet/project/account" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | array | 账户列表 |
+| data[].id | string | 账户 ID |
+| data[].address | string | 地址 |
+| data[].balance | string | 余额 |
+| data[].chain | string | 区块链 |
+| data[].currency | string | 币种 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": [
+    {
+      "address": "0x1234...abcd",
+      "balance": "1000.00",
+      "chain": "BSC",
+      "currency": "USDT",
+      "id": "account-001"
+    }
+  ],
+  "message": ""
+}
+```
+
+---
+
+## 查询实时链上余额
+
+**URL**：`GET /wallet/project/account/balance`
+
+### 请求参数
+
+<ParamField query="accountId" type="string" required>
+  账户 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/wallet/project/account/balance?accountId=account-001" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | string | 实时余额 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": "1000.00",
+  "message": ""
+}
+```
+
+---
+
+## 商户创建新项目
+
+**URL**：`POST /wallet/project/create`
+
+### 请求参数
+
+<ParamField body="name" type="string" required>
+  项目名称
+</ParamField>
+<ParamField body="assembleChain" type="string" required>
+  归集目标链（可选值：`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`）
+</ParamField>
+<ParamField body="assembleAddress" type="string" required>
+  归集地址
+</ParamField>
+<ParamField body="settleToken" type="string" required>
+  结算币种（可选值：`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+<ParamField body="callbackUrl" type="string" required>
+  回调 URL
+</ParamField>
+<ParamField body="paymentPageCallbackUrl" type="string">
+  收银台页面回调 URL（可选）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/wallet/project/create \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{
+    "name": "My Project",
+    "assembleChain": "BSC",
+    "assembleAddress": "0x1234...abcd",
+    "settleToken": "USDT",
+    "callbackUrl": "https://example.com/callback"
+  }'
+```
+
+```json Request Body
+{
+  "name": "My Project",
+  "assembleChain": "BSC",
+  "assembleAddress": "0x1234...abcd",
+  "settleToken": "USDT",
+  "callbackUrl": "https://example.com/callback",
+  "paymentPageCallbackUrl": "https://example.com/payment-callback"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| apiKey | string | 项目 API Key |
+| apiSecret | string | 项目 API Secret |
+| projectName | string | 项目名称 |
+| assembleChain | string | 归集链 |
+| assembleAddress | string | 归集地址 |
+| settleToken | string | 结算币种 |
+
+### 响应示例
+
+```json
+{
+  "apiKey": "new-project-api-key",
+  "apiSecret": "new-project-api-secret",
+  "assembleAddress": "0x1234...abcd",
+  "assembleChain": "BSC",
+  "projectName": "My Project",
+  "settleToken": "USDT"
+}
+```
+
+---
+
+## 钱包转账流水
+
+**URL**：`GET /wallet/transfer/history`
+
+### 请求参数
+
+<ParamField query="page" type="integer" required>
+  页码
+</ParamField>
+<ParamField query="pageSize" type="integer" required>
+  每页数量
+</ParamField>
+<ParamField query="projectId" type="string">
+  项目 ID（可选）
+</ParamField>
+<ParamField query="chain" type="string">
+  区块链筛选（`ETH` / `BSC` / `TRON`）
+</ParamField>
+<ParamField query="token" type="string">
+  币种筛选（如 `USDT`）
+</ParamField>
+<ParamField query="startTime" type="string">
+  开始时间戳（秒）
+</ParamField>
+<ParamField query="endTime" type="string">
+  结束时间戳（秒）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/wallet/transfer/history?page=1&pageSize=10" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| content | array | 转账记录列表 |
+| content[].id | string | 交易 ID |
+| content[].amount | string | 交易金额 |
+| content[].chain | string | 区块链 |
+| content[].currency | string | 币种 |
+| content[].fromAddress | string | 交易发起地址 |
+| content[].toAddress | string | 交易接收地址 |
+| content[].gas | string | 交易手续费 |
+| content[].gasPrice | string | 燃料费单价 |
+| content[].status | string | 状态：`CREATED` / `PROCESSING` / `SUCCESS` / `ERROR` / `CANCELED` / `GAS_CHARGING` / `TO_BE_CONFIRMED` / `UNDER_REVIEW` |
+| content[].txid | string | 链上交易 ID |
+| content[].createTime | integer | 创建时间戳 |
+| content[].txTime | integer | 交易时间戳 |
+| page | integer | 当前页码 |
+| page_size | integer | 每页数量 |
+| total | integer | 总记录数 |
+| total_pages | integer | 总页数 |
+| last | boolean | 是否最后一页 |
+
+### 响应示例
+
+```json
+{
+  "content": [
+    {
+      "amount": "50.00",
+      "chain": "BSC",
+      "createTime": 1681973331,
+      "currency": "USDT",
+      "fromAddress": "0xfrom...",
+      "gas": "0.001",
+      "gasPrice": "5",
+      "id": "tx-001",
+      "status": "SUCCESS",
+      "toAddress": "0xto...",
+      "txTime": 1681973931,
+      "txid": "0xtxhash..."
+    }
+  ],
+  "last": true,
+  "page": 1,
+  "page_size": 10,
+  "total": 1,
+  "total_pages": 1
+}
+```

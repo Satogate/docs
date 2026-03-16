@@ -1,0 +1,119 @@
+---
+title: "开始使用 Satogate API"
+description: "注册账号、获取 API 密钥，接入 Satogate 数字货币支付服务"
+---
+
+## 一、注册 Satogate 账号并获取 API 密钥
+
+<Steps>
+  <Step title="注册账号">
+    访问 [console.satogate.io](https://console.satogate.io)，使用邮箱注册 Satogate 账号。
+  </Step>
+  <Step title="完善信息">
+    完善账号信息，开启谷歌验证器。
+  </Step>
+  <Step title="提交 KYC">
+    提交 KYC 个人信息以及企业信息。
+  </Step>
+  <Step title="等待审核">
+    等待审核通过。
+  </Step>
+  <Step title="创建项目">
+    创建项目，获得 API 密钥。
+  </Step>
+</Steps>
+
+## 二、调用 API 生成收款地址，实现回调接口
+
+Satogate 为商户提供两种收款模式：**充值模式**和**订单模式**。
+
+<Tabs>
+  <Tab title="充值模式">
+    商户可以使用 Satogate API 为其每个用户生成一个唯一固定的收款地址。用户转账到这个收款地址后，Satogate 会把资金归集到商户的归集钱包地址，通过接口通知商户资金已到账，达到收款的目的。
+
+    <Frame caption="用户充值数字货币流程图">
+      <img src="/img/charge.png" alt="充值流程图" />
+    </Frame>
+
+    ### API 接入步骤
+
+    <Steps>
+      <Step title="生成收款地址">
+        调用[获取收款地址](/api/02-wallet#获取收款地址)接口为每个用户生成唯一固定的收款地址。
+      </Step>
+      <Step title="实现回调接口">
+        在商户端实现[回调接口](/api/08-callback)，接收 Satogate 的到账通知。
+      </Step>
+    </Steps>
+
+    ```mermaid
+    sequenceDiagram
+        participant User as 用户
+        participant Merchant as 商户系统
+        participant Satogate as Satogate API
+        participant Chain as 区块链
+
+        Merchant->>Satogate: POST /wallet/address
+        Satogate-->>Merchant: 返回收款地址
+        Merchant-->>User: 展示收款地址
+        User->>Chain: 转账到收款地址
+        Chain-->>Satogate: 链上确认
+        Satogate->>Merchant: POST 回调通知（到账）
+    ```
+  </Tab>
+  <Tab title="订单模式">
+    商户平台在为用户生成订单后，可以使用 Satogate API 为订单生成一个收款地址。用户在规定时间内转账到这个收款地址后，Satogate 会把资金归集到商户的归集钱包地址，通过接口通知商户资金已到账，达到订单收款的目的。
+
+    <Frame caption="用户使用 USDT 支付订单流程图">
+      <img src="/img/pay_usdt.png" alt="USDT 支付流程图" />
+    </Frame>
+
+    <Frame caption="用户使用非 USDT 支付订单流程图">
+      <img src="/img/pay_non_usdt.png" alt="非 USDT 支付流程图" />
+    </Frame>
+
+    ### API 接入步骤
+
+    <Steps>
+      <Step title="生成订单收款地址">
+        调用[获取商户订单收款地址](/api/03-deposit-order#获取商户订单收款地址)接口为商户订单生成收款地址。如果用户选择非 USDT 支付，需要先调用[询价](/api/03-deposit-order#询价)接口获取兑换价格，用户确认价格后调用[锁定价格](/api/03-deposit-order#锁定价格并提交订单)接口，然后在链上转账支付。
+      </Step>
+      <Step title="实现回调接口">
+        在商户端实现[回调接口](/api/08-callback)，接收 Satogate 的到账通知。
+      </Step>
+    </Steps>
+
+    ```mermaid
+    sequenceDiagram
+        participant User as 用户
+        participant Merchant as 商户系统
+        participant Satogate as Satogate API
+        participant Chain as 区块链
+
+        Merchant->>Satogate: POST /deposit_order/depositAddress
+        Satogate-->>Merchant: 返回订单收款地址
+        Note over User,Merchant: 如使用非 USDT 支付
+        Merchant->>Satogate: GET /deposit_order/quote (询价)
+        Satogate-->>Merchant: 返回兑换价格
+        Merchant->>Satogate: POST /deposit_order/lock (锁定价格)
+        Satogate-->>Merchant: 返回锁定结果
+        Merchant-->>User: 展示收款地址和金额
+        User->>Chain: 转账到收款地址
+        Chain-->>Satogate: 链上确认
+        Satogate->>Merchant: POST 回调通知（到账）
+    ```
+  </Tab>
+</Tabs>
+
+## 三、使用 Payment Page 接入
+
+如果您不想自行开发支付前端，可以使用 Satogate 托管的 Payment Page。
+
+<Steps>
+  <Step title="生成支付页面链接">
+    生成 [Payment Page 链接](/api/payment-page-guide)。
+  </Step>
+  <Step title="实现回调接口">
+    在商户端实现[回调接口](/api/08-callback)，接收 Satogate 的到账通知。
+  </Step>
+</Steps>

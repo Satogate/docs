@@ -1,0 +1,88 @@
+---
+title: "货币信息"
+description: "查询 Satogate 支持的货币和区块链信息"
+---
+
+## 支持的货币列表
+
+**URL**：`GET /currency/list`
+
+<Note>此接口无需签名认证。</Note>
+
+### 请求参数
+
+<ParamField query="chain" type="string">
+  区块链筛选（可选值：`ETH` / `BSC` / `TRON`）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/currency/list?chain=BSC"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| data | object | 按链分组的货币列表 |
+| data.[chain] | array | 该链下支持的货币数组 |
+| data.[chain][].symbol | string | 货币符号 |
+| data.[chain][].contract | string | 合约地址（原生币为 null） |
+| data.[chain][].icon | string | 货币图标 URL |
+| data.[chain][].decimals | integer | 精度 |
+| data.[chain][].minCharge | string | 最小充值金额 |
+| code | integer | 状态码 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "data": {
+    "BSC": [
+      {
+        "symbol": "BNB",
+        "contract": null,
+        "icon": "https://pifutures.oss-cn-shanghai.aliyuncs.com/cash/bnb.png",
+        "decimals": 18,
+        "minCharge": "0"
+      },
+      {
+        "symbol": "USDT",
+        "contract": "0x0047b319f85284acb41d29fc2a1fa9066a13fe3f",
+        "icon": "https://pifutures.oss-cn-shanghai.aliyuncs.com/cash/usdt.png",
+        "decimals": 6,
+        "minCharge": "100.0"
+      },
+      {
+        "symbol": "USDC",
+        "contract": "0x0047b319f85284acb41d29fc2a1fa9066a13fe3f",
+        "icon": "https://pifutures.oss-cn-shanghai.aliyuncs.com/cash/usdc.png",
+        "decimals": 18,
+        "minCharge": "0"
+      }
+    ],
+    "TRON": [
+      {
+        "symbol": "TRX",
+        "contract": null,
+        "icon": "https://pifutures.oss-cn-shanghai.aliyuncs.com/cash/TRX.png",
+        "decimals": 12,
+        "minCharge": "0"
+      },
+      {
+        "symbol": "USDT",
+        "contract": "TAK91B45WCr8Dz8QZQZGwHgvEZJEYa8wQK",
+        "icon": "https://pifutures.oss-cn-shanghai.aliyuncs.com/cash/usdt.png",
+        "decimals": 6,
+        "minCharge": "0"
+      }
+    ]
+  },
+  "code": 200,
+  "message": ""
+}
+```

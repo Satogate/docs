@@ -1,0 +1,352 @@
+---
+title: "充值订单"
+description: "充值订单管理：收款地址获取、订单查询、价格锁定与解锁"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 修改订单状态
+
+**URL**：`POST /deposit_order/changeStatus`
+
+### 请求参数
+
+<ParamField body="id" type="string" required>
+  充值订单 ID
+</ParamField>
+<ParamField body="status" type="string">
+  目标状态（`FINISHED` / `TIMEOUT`）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/deposit_order/changeStatus \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"id": "order-001", "status": "FINISHED"}'
+```
+
+```json Request Body
+{
+  "id": "order-001",
+  "status": "FINISHED"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | string | 订单 ID |
+| address | string | 收款地址 |
+| amount | string | 充值金额 |
+| amountUsd | string | 折合 USD |
+| chain | string | 区块链 |
+| token | string | 币种 |
+| status | string | 状态：`PROCESSING` / `FINISHED` / `ERROR` / `INSUFFICIENT_AMOUNT` / `TIMEOUT` |
+| orderModeStatus | string | 订单模式状态：`CREATED` / `FINISHED` / `PARTIALLY_PAID` / `TIMEOUT` |
+| depositAmount | string | 到账金额 |
+| fromAddress | string | 转出地址 |
+| merchantAddressId | string | 商户关联 ID |
+| txHash | string | 链上交易 Hash |
+| txList | array | 链上交易 Hash 列表 |
+| settleTxid | string | 结算交易 ID |
+| createTime | integer | 创建时间戳 |
+| finishedTime | integer | 完成时间戳 |
+
+### 响应示例
+
+```json
+{
+  "address": "0x1234...abcd",
+  "amount": "100.00",
+  "amountUsd": "100.00",
+  "chain": "BSC",
+  "createTime": 1681973331,
+  "depositAmount": "100.00",
+  "finishedTime": 1681973931,
+  "fromAddress": "0xfrom...",
+  "id": "order-001",
+  "merchantAddressId": "user123",
+  "orderModeStatus": "FINISHED",
+  "settleTxid": "tx-settle-001",
+  "status": "FINISHED",
+  "token": "USDT",
+  "txHash": "0xhash...",
+  "txList": ["0xhash..."]
+}
+```
+
+---
+
+## 获取商户订单收款地址
+
+**URL**：`POST /deposit_order/depositAddress`
+
+### 请求参数
+
+<ParamField body="merchantOrderId" type="string" required>
+  商户方订单 ID
+</ParamField>
+<ParamField body="merchantOrderAmount" type="number" required>
+  订单金额（USD）
+</ParamField>
+<ParamField body="merchantOrderExpireTime" type="number">
+  订单过期秒数（单位：秒，默认 1800）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/deposit_order/depositAddress \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"merchantOrderId": "order-123", "merchantOrderAmount": 100, "merchantOrderExpireTime": 1800}'
+```
+
+```json Request Body
+{
+  "merchantOrderId": "order-123",
+  "merchantOrderAmount": 100,
+  "merchantOrderExpireTime": 1800
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| depositOrderId | string | 充值订单 ID |
+| merchantOrderId | string | 商户订单 ID |
+| type | string | 地址类型 |
+| wallets | array | 钱包地址列表 |
+| wallets[].address | string | 收款地址 |
+| wallets[].chain | string | 区块链 |
+| wallets[].supportTokens | array | 支持的币种 |
+
+### 响应示例
+
+```json
+{
+  "depositOrderId": "deposit-001",
+  "merchantOrderId": "order-123",
+  "type": "BOUND",
+  "wallets": [
+    {
+      "address": "0x1234...abcd",
+      "chain": "BSC",
+      "supportTokens": ["USDT", "USDC"]
+    }
+  ]
+}
+```
+
+---
+
+## 查询订单详情
+
+**URL**：`GET /deposit_order/detail`
+
+### 请求参数
+
+<ParamField query="id" type="string" required>
+  充值订单 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/deposit_order/detail?id=order-001" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+与[修改订单状态](#修改订单状态)的响应参数一致。
+
+### 响应示例
+
+```json
+{
+  "address": "0x1234...abcd",
+  "amount": "100.00",
+  "amountUsd": "100.00",
+  "chain": "BSC",
+  "createTime": 1681973331,
+  "depositAmount": "100.00",
+  "finishedTime": 1681973931,
+  "fromAddress": "0xfrom...",
+  "id": "order-001",
+  "merchantAddressId": "user123",
+  "orderModeStatus": "FINISHED",
+  "settleTxid": "",
+  "status": "FINISHED",
+  "token": "USDT",
+  "txHash": "0xhash...",
+  "txList": ["0xhash..."]
+}
+```
+
+---
+
+## 锁定价格并提交订单
+
+**URL**：`POST /deposit_order/lock`
+
+### 请求参数
+
+<ParamField body="depositOrderId" type="string">
+  充值订单 ID
+</ParamField>
+<ParamField body="merchantOrderId" type="string">
+  商户方订单 ID
+</ParamField>
+<ParamField body="chain" type="string">
+  充值链（`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`）
+</ParamField>
+<ParamField body="asset" type="string">
+  充值币种（`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+<ParamField body="price" type="number">
+  锁定价格
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/deposit_order/lock \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"depositOrderId": "deposit-001", "merchantOrderId": "order-123", "chain": "BSC", "asset": "BNB", "price": 320.5}'
+```
+
+```json Request Body
+{
+  "depositOrderId": "deposit-001",
+  "merchantOrderId": "order-123",
+  "chain": "BSC",
+  "asset": "BNB",
+  "price": 320.5
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| amount | number | 需充值数量 |
+| asset | string | 充值币种 |
+| chain | string | 充值链 |
+| depositAddress | string | 充值地址 |
+| price | number | 锁定价格 |
+
+### 响应示例
+
+```json
+{
+  "amount": 0.312,
+  "asset": "BNB",
+  "chain": "BSC",
+  "depositAddress": "0x1234...abcd",
+  "price": 320.5
+}
+```
+
+---
+
+## 询价
+
+**URL**：`GET /deposit_order/quote`
+
+<Note>此接口无需签名认证。</Note>
+
+### 请求参数
+
+<ParamField query="asset" type="string" required>
+  币种（`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+<ParamField query="amount" type="number" required>
+  USDT 数量
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/deposit_order/quote?asset=BNB&amount=100"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| assetAmount | number | 对应币种数量 |
+| price | number | 当前价格 |
+
+### 响应示例
+
+```json
+{
+  "assetAmount": 0.312,
+  "price": 320.5
+}
+```
+
+---
+
+## 解锁订单价格
+
+**URL**：`POST /deposit_order/unlock`
+
+### 请求参数
+
+<ParamField body="depositOrderId" type="string">
+  充值订单 ID
+</ParamField>
+<ParamField body="merchantOrderId" type="string">
+  商户方订单 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/deposit_order/unlock \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"depositOrderId": "deposit-001", "merchantOrderId": "order-123"}'
+```
+
+```json Request Body
+{
+  "depositOrderId": "deposit-001",
+  "merchantOrderId": "order-123"
+}
+```
+</CodeGroup>
+
+### 响应
+
+成功时返回空响应体。

@@ -1,0 +1,98 @@
+---
+title: "回调模板"
+description: "Satogate 向商户推送的交易回调接口规范"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 回调给商家接口（demo）
+
+**URL**：`POST /demo/callback`
+
+<Note>
+  当商户接收到请求并处理完成后，返回字符串 `"OK"` 即可。Satogate 会在交易状态变更时主动向商户的回调 URL 发送 POST 请求。
+</Note>
+
+<Warning>
+  只有当状态为 `FINISHED`、`ERROR`、`INSUFFICIENT_AMOUNT`、`TIMEOUT` 时，才会回调给商户。`PROCESSING` 状态时不会回调。`TIMEOUT` 仅出现于一次性钱包地址的情况。
+</Warning>
+
+### 回调请求体
+
+<ParamField body="id" type="string">
+  充值订单号
+</ParamField>
+<ParamField body="address" type="string" required>
+  收款地址
+</ParamField>
+<ParamField body="amount" type="string" required>
+  充值金额
+</ParamField>
+<ParamField body="amountUsd" type="string" required>
+  折合 USD 金额
+</ParamField>
+<ParamField body="chain" type="string">
+  区块链（`ETH` / `BSC` / `TRON`）
+</ParamField>
+<ParamField body="token" type="string">
+  币种
+</ParamField>
+<ParamField body="status" type="string">
+  充值状态：`FINISHED` / `ERROR` / `INSUFFICIENT_AMOUNT` / `TIMEOUT`
+</ParamField>
+<ParamField body="orderModeStatus" type="string">
+  订单模式状态：`CREATED` / `FINISHED` / `PARTIALLY_PAID` / `TIMEOUT`
+</ParamField>
+<ParamField body="merchantAddressId" type="string">
+  商户关联 ID（固定地址充值模式时返回）
+</ParamField>
+<ParamField body="merchantOrderId" type="string">
+  商户订单 ID
+</ParamField>
+<ParamField body="fromAddress" type="string" required>
+  转出地址
+</ParamField>
+<ParamField body="txHash" type="string" required>
+  链上交易 Hash
+</ParamField>
+<ParamField body="txList" type="array" required>
+  链上交易 Hash 列表（订单模式可能关联多笔链上转账）
+</ParamField>
+<ParamField body="createTime" type="integer">
+  创建时间戳
+</ParamField>
+<ParamField body="finishedTime" type="integer">
+  完成时间戳
+</ParamField>
+
+### 回调请求示例
+
+```json
+{
+  "address": "0x1234...abcd",
+  "amount": "100.00",
+  "amountUsd": "100.00",
+  "chain": "BSC",
+  "createTime": 1681973331,
+  "finishedTime": 1681973931,
+  "fromAddress": "0xfrom...",
+  "id": "order-001",
+  "merchantAddressId": "user123",
+  "merchantOrderId": "order-123",
+  "orderModeStatus": "FINISHED",
+  "status": "FINISHED",
+  "token": "USDT",
+  "txHash": "0xhash...",
+  "txList": ["0xhash..."]
+}
+```
+
+### 商户响应
+
+商户收到回调后处理完成，直接返回字符串：
+
+```
+OK
+```

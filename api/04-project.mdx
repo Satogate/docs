@@ -1,0 +1,264 @@
+---
+title: "项目管理"
+description: "项目的创建、查询、删除与密钥管理"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 创建项目
+
+**URL**：`POST /project/create`
+
+### 请求参数
+
+<ParamField body="name" type="string" required>
+  项目名称
+</ParamField>
+<ParamField body="assembleChain" type="string" required>
+  归集目标链（`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`）
+</ParamField>
+<ParamField body="assembleAddr" type="string">
+  归集地址（没有则自动生成）
+</ParamField>
+<ParamField body="settleCurrency" type="string" required>
+  结算资产（`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/project/create \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"name": "My Project", "assembleChain": "BSC", "settleCurrency": "USDT"}'
+```
+
+```json Request Body
+{
+  "name": "My Project",
+  "assembleChain": "BSC",
+  "assembleAddr": "",
+  "settleCurrency": "USDT"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | object | 项目信息 |
+| data.id | string | 项目 ID |
+| data.name | string | 项目名称 |
+| data.appKey | string | 项目 API Key |
+| data.assembleAddress | string | 归集地址 |
+| data.assembleChain | string | 归集链 |
+| data.settleCurrency | string | 结算资产 |
+| data.callbackUrl | string | 回调 URL |
+| data.callbackDomain | string | 回调域名 |
+| data.paymentPageUrl | string | 支付页面 URL |
+| data.status | string | 项目状态 |
+| data.createTime | integer | 创建时间 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": {
+    "appKey": "project-api-key",
+    "assembleAddress": "0x1234...abcd",
+    "assembleChain": "BSC",
+    "callbackDomain": "",
+    "callbackUrl": "",
+    "createTime": 1681973331,
+    "id": "project-001",
+    "name": "My Project",
+    "paymentPageUrl": "",
+    "settleCurrency": "USDT",
+    "status": "ACTIVE"
+  },
+  "message": ""
+}
+```
+
+---
+
+## 项目列表
+
+**URL**：`GET /project/list`
+
+### 请求参数
+
+<ParamField query="page" type="integer" required>
+  页码
+</ParamField>
+<ParamField query="pageSize" type="integer" required>
+  每页数量
+</ParamField>
+<ParamField query="projectId" type="string" required>
+  项目 ID
+</ParamField>
+<ParamField query="status" type="string" required>
+  项目状态（`ACTIVE` / `ARCHIVED` / `BANNED` / `DELETED` / `DEPRECATED` / `INACTIVE` / `LOCKED` / `NORMAL` / `PENDING` / `SUSPENDED`）
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/project/list?page=1&pageSize=10&projectId=project-001&status=ACTIVE" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data.content | array | 项目列表 |
+| data.content[].id | string | 项目 ID |
+| data.content[].name | string | 项目名称 |
+| data.content[].appKey | string | API Key |
+| data.content[].assembleAddress | string | 归集地址 |
+| data.content[].assembleChain | string | 归集链 |
+| data.content[].settleCurrency | string | 结算资产 |
+| data.content[].status | string | 项目状态 |
+| data.content[].createTime | integer | 创建时间 |
+| data.page | integer | 页码 |
+| data.page_size | integer | 每页数量 |
+| data.total | integer | 总数 |
+| data.total_pages | integer | 总页数 |
+| data.last | boolean | 是否最后一页 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": {
+    "content": [
+      {
+        "appKey": "project-api-key",
+        "assembleAddress": "0x1234...abcd",
+        "assembleChain": "BSC",
+        "callbackDomain": "",
+        "callbackUrl": "",
+        "createTime": 1681973331,
+        "id": "project-001",
+        "name": "My Project",
+        "paymentPageUrl": "",
+        "settleCurrency": "USDT",
+        "status": "ACTIVE"
+      }
+    ],
+    "last": true,
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "total_pages": 1
+  },
+  "message": ""
+}
+```
+
+---
+
+## 移除项目
+
+**URL**：`POST /project/remove`
+
+### 请求参数
+
+<ParamField body="projectId" type="string">
+  项目 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/project/remove \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"projectId": "project-001"}'
+```
+
+```json Request Body
+{
+  "projectId": "project-001"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | boolean | 是否成功 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": true,
+  "message": ""
+}
+```
+
+---
+
+## 查询项目 App Secret
+
+**URL**：`GET /project/secret`
+
+### 请求参数
+
+<ParamField query="projectId" type="string" required>
+  项目 ID
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/project/secret?projectId=project-001" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | string | App Secret |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": "0CDE6743F18F3DA********49FD47C1576671FD5",
+  "message": ""
+}
+```

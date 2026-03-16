@@ -1,0 +1,271 @@
+---
+title: "支付页面 API"
+description: "Payment Page 相关的后端 API 接口"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 锁定价格并提交订单
+
+**URL**：`POST /paymentPage/depositOrder/lock`
+
+### 请求参数
+
+<ParamField body="depositOrderId" type="string">
+  充值订单 ID
+</ParamField>
+<ParamField body="merchantOrderId" type="string">
+  商户方订单 ID
+</ParamField>
+<ParamField body="merchantOrderAmount" type="number">
+  订单金额
+</ParamField>
+<ParamField body="merchantOrderExpireTime" type="number">
+  订单过期秒数
+</ParamField>
+<ParamField body="chain" type="string">
+  充值链（`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`）
+</ParamField>
+<ParamField body="asset" type="string">
+  充值币种（`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+<ParamField body="price" type="number">
+  锁定价格
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/paymentPage/depositOrder/lock \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"depositOrderId": "deposit-001", "merchantOrderId": "order-123", "chain": "BSC", "asset": "BNB", "price": 320.5}'
+```
+
+```json Request Body
+{
+  "depositOrderId": "deposit-001",
+  "merchantOrderId": "order-123",
+  "merchantOrderAmount": 100,
+  "merchantOrderExpireTime": 1800,
+  "chain": "BSC",
+  "asset": "BNB",
+  "price": 320.5
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| amount | number | 需充值数量 |
+| asset | string | 充值币种 |
+| chain | string | 充值链 |
+| depositAddress | string | 充值地址 |
+| price | number | 锁定价格 |
+
+### 响应示例
+
+```json
+{
+  "amount": 0.312,
+  "asset": "BNB",
+  "chain": "BSC",
+  "depositAddress": "0x1234...abcd",
+  "price": 320.5
+}
+```
+
+---
+
+## 解锁订单价格
+
+**URL**：`POST /paymentPage/depositOrder/unlock`
+
+### 请求参数
+
+<ParamField body="depositOrderId" type="string">
+  充值订单 ID
+</ParamField>
+<ParamField body="merchantOrderId" type="string">
+  商户方订单 ID
+</ParamField>
+<ParamField body="merchantOrderAmount" type="number" required>
+  订单金额
+</ParamField>
+<ParamField body="merchantOrderExpireTime" type="number">
+  订单过期秒数
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/paymentPage/depositOrder/unlock \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"depositOrderId": "deposit-001", "merchantOrderId": "order-123", "merchantOrderAmount": 100}'
+```
+
+```json Request Body
+{
+  "depositOrderId": "deposit-001",
+  "merchantOrderId": "order-123",
+  "merchantOrderAmount": 100,
+  "merchantOrderExpireTime": 1800
+}
+```
+</CodeGroup>
+
+### 响应
+
+成功时返回空响应体。
+
+---
+
+## 生成 Payment Page 跳转链接
+
+**URL**：`POST /paymentPage/gen_payment_page`
+
+### 请求参数
+
+<ParamField query="appKey" type="string">
+  项目 API Key
+</ParamField>
+<ParamField query="secret" type="string">
+  项目 API Secret
+</ParamField>
+<ParamField query="merchantAddressId" type="string">
+  商户关联 ID（充值模式）
+</ParamField>
+<ParamField query="merchantOrderId" type="string">
+  商户订单 ID（订单模式）
+</ParamField>
+<ParamField query="merchantOrderAmount" type="string">
+  订单金额
+</ParamField>
+<ParamField query="merchantOrderExpireTime" type="number">
+  订单过期秒数
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.satogate.io/paymentPage/gen_payment_page?appKey=your-key&secret=your-secret&merchantOrderId=order-123&merchantOrderAmount=100&merchantOrderExpireTime=1800" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应
+
+返回生成的 Payment Page 跳转链接。
+
+---
+
+## Payment Page 页面参数
+
+**URL**：`GET /paymentPage/index`
+
+### 请求参数
+
+<ParamField query="uri" type="string" required>
+  当前页面路径
+</ParamField>
+<ParamField query="merchantAddressId" type="string">
+  商户关联 ID（充值模式）
+</ParamField>
+<ParamField query="merchantOrderId" type="string">
+  商户方订单 ID（订单模式）
+</ParamField>
+<ParamField query="merchantOrderAmount" type="number">
+  订单金额
+</ParamField>
+<ParamField query="merchantOrderExpireTime" type="number">
+  订单过期时间（秒）
+</ParamField>
+<ParamField query="demo" type="string">
+  是否用于展示
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.satogate.io/paymentPage/index?uri=/charge&merchantAddressId=user123" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331"
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| name | string | 商户或项目名称 |
+| ppUrl | string | Payment Page URL |
+| priceLockSecond | number | 价格锁定秒数 |
+| requestedDepositOrderInfo | object | 充值订单信息 |
+| requestedDepositOrderInfo.id | string | 订单 ID |
+| requestedDepositOrderInfo.chain | string | 区块链 |
+| requestedDepositOrderInfo.asset | string | 币种 |
+| requestedDepositOrderInfo.price | number | 锁定价格 |
+| requestedDepositOrderInfo.status | string | 订单状态 |
+| requestedDepositOrderInfo.lastPriceLockedTime | integer | 锁定时间 |
+| wallets | array | 钱包列表 |
+| wallets[].address | string | 地址 |
+| wallets[].chain | string | 区块链 |
+| wallets[].chainId | string | 链 ID |
+| wallets[].tokens | array | 支持的代币列表 |
+| wallets[].tokens[].symbol | string | 代币符号 |
+| wallets[].tokens[].contract | string | 合约地址 |
+| wallets[].tokens[].decimals | integer | 精度 |
+| wallets[].tokens[].icon | string | 图标 URL |
+| wallets[].tokens[].minCharge | string | 最小充值金额 |
+| wallets[].tokens[].enabled | boolean | 是否支持充值 |
+
+### 响应示例
+
+```json
+{
+  "name": "My Merchant",
+  "ppUrl": "https://pay.satogate.io/charge",
+  "priceLockSecond": 60,
+  "requestedDepositOrderInfo": {
+    "asset": "USDT",
+    "chain": "BSC",
+    "id": "deposit-001",
+    "lastPriceLockedTime": 1681973331,
+    "price": 1.0,
+    "status": "CREATED"
+  },
+  "wallets": [
+    {
+      "address": "0x1234...abcd",
+      "chain": "BSC",
+      "chainId": "56",
+      "tokens": [
+        {
+          "contract": "0x55d398326f99059fF775485246999027B3197955",
+          "decimals": 18,
+          "enabled": true,
+          "icon": "https://example.com/usdt.png",
+          "minCharge": "1",
+          "symbol": "USDT"
+        }
+      ]
+    }
+  ]
+}
+```

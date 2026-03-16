@@ -1,0 +1,92 @@
+---
+title: "转账服务"
+description: "发起链上数字货币转账"
+---
+
+<Snippet file="auth-header.mdx" />
+
+---
+
+## 发起转账
+
+**URL**：`POST /transaction/transfer`
+
+### 请求参数
+
+<ParamField body="toAddress" type="string" required>
+  收款地址
+</ParamField>
+<ParamField body="chain" type="string" required>
+  区块链（`BSC` / `BTC` / `ETH` / `POLYGON` / `TRON`）
+</ParamField>
+<ParamField body="asset" type="string" required>
+  币种（`BNB` / `BTC` / `ETH` / `MATIC` / `TRX` / `USD` / `USDC` / `USDT`）
+</ParamField>
+<ParamField body="amount" type="string" required>
+  转账数量
+</ParamField>
+
+### 请求示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.satogate.io/transaction/transfer \
+  -H "Content-Type: application/json" \
+  -H "FP-API-KEY: your-api-key" \
+  -H "FP-SIGN: your-sign" \
+  -H "FP-TIMESTAMP: 1681973331" \
+  -d '{"toAddress": "0xto...", "chain": "BSC", "asset": "USDT", "amount": "50"}'
+```
+
+```json Request Body
+{
+  "toAddress": "0xto...",
+  "chain": "BSC",
+  "asset": "USDT",
+  "amount": "50"
+}
+```
+</CodeGroup>
+
+### 响应参数
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| code | integer | 状态码 |
+| data | object | 交易信息 |
+| data.id | string | 交易 ID |
+| data.amount | string | 交易金额 |
+| data.chain | string | 区块链 |
+| data.currency | string | 币种 |
+| data.fromAddress | string | 交易发起地址 |
+| data.toAddress | string | 交易接收地址 |
+| data.gas | string | 交易手续费 |
+| data.gasPrice | string | 燃料费单价 |
+| data.status | string | 状态：`CREATED` / `PROCESSING` / `SUCCESS` / `ERROR` / `CANCELED` / `GAS_CHARGING` / `TO_BE_CONFIRMED` / `UNDER_REVIEW` |
+| data.txid | string | 链上交易 ID |
+| data.createTime | integer | 创建时间戳 |
+| data.txTime | integer | 交易时间戳 |
+| message | string | 信息 |
+
+### 响应示例
+
+```json
+{
+  "code": 0,
+  "data": {
+    "amount": "50",
+    "chain": "BSC",
+    "createTime": 1681973331,
+    "currency": "USDT",
+    "fromAddress": "0xfrom...",
+    "gas": "0.001",
+    "gasPrice": "5",
+    "id": "tx-001",
+    "status": "CREATED",
+    "toAddress": "0xto...",
+    "txTime": 0,
+    "txid": ""
+  },
+  "message": ""
+}
+```
